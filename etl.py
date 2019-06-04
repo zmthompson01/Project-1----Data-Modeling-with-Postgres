@@ -25,7 +25,7 @@ def process_song_file(cur, filepath):
     cur.execute(song_table_insert, song_data)
 
     
-    #create artist table and insert artist record
+    # create artist table and insert artist record
     cur.execute(artist_table_create)
     artist_data = list(df[['artist_id','artist_name','artist_latitude', 'artist_longitude']].iloc[0,:])
     cur.execute(artist_table_insert, artist_data)
@@ -35,8 +35,14 @@ def process_log_file(cur, filepath):
     # open log file
     df = pd.concat([pd.DataFrame.from_dict(pd.read_json(i, lines=True)) for i in get_files(filepath='data/log_data')])
 
-    df = df[df['page'] == 'NextSong']    # filter by NextSong action
-    df['ts'] = pd.to_datetime(df['ts'], unit='ms')    # convert timestamp column to datetime
+    
+    # filter by NextSong action
+    df = df[df['page'] == 'NextSong']
+    
+    
+    # convert timestamp column to datetime
+    df['ts'] = pd.to_datetime(df['ts'], unit='ms')
+    
     
     # insert time data records
     time_df = pd.DataFrame({
@@ -48,6 +54,7 @@ def process_log_file(cur, filepath):
         ,'year':df['ts'].dt.year
         ,'weekday':df['ts'].dt.weekday})
 
+    
     # create time table and  inster time row
     cur.execute(time_table_create)
     for i, row in time_df.iterrows():
@@ -57,14 +64,17 @@ def process_log_file(cur, filepath):
     # load user table
     user_df = df[['userId', 'firstName', 'lastName', 'gender', 'level']]
 
+    
     # create user table and insert user record
     cur.execute(user_table_create)
     for i, row in user_df.iterrows():
         cur.execute(user_table_insert, row)
 
+        
     #create songplay table and insert songplay records
     cur.execute(songplay_table_create)
     for index, row in df.iterrows():
+        
         
         # get songid and artistid from song and artist tables
         cur.execute(song_select, (row.song, row.artist, row.length))
@@ -88,10 +98,12 @@ def process_data(cur, conn, filepath, func):
         for f in files :
             all_files.append(os.path.abspath(f))
 
+            
     # get total number of files found
     num_files = len(all_files)
     print('{} files found in {}'.format(num_files, filepath))
 
+    
     # iterate over files and process
     for i, datafile in enumerate(all_files, 1):
         func(cur, datafile)
@@ -100,15 +112,25 @@ def process_data(cur, conn, filepath, func):
 
 
 def main():
+    # create database `sparkifydb`
     create_tables.create_database()
     
+    
+    # connect to database
     conn = psycopg2.connect("host=127.0.0.1 dbname=sparkifydb user=student password=student")
     cur = conn.cursor()
 
+    
+    # run dimension table creations
     process_data(cur, conn, filepath='data/song_data', func=process_song_file)
-    process_data(cur, conn, filepath='data/log_data', func=process_log_file)
+
+    
+    # run fact table creation
+    process_data(cur, conn, filepat h='data/log_data', func=process_log_file)
 
     conn.close()
 
+
+# run etl    
 if __name__ == "__main__":
     main()

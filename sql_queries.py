@@ -1,21 +1,22 @@
 # DROP TABLES
 
-songplay_table_drop = "DROP TABLE songplay"
-user_table_drop = "DROP TABLE users"
-song_table_drop = "DROP TABLE songs"
-artist_table_drop = "DROP TABLE artists"
-time_table_drop = "DROP TABLE time"
+songplay_table_drop = """DROP TABLE songplay"""
+user_table_drop = """DROP TABLE users"""
+song_table_drop = """DROP TABLE songs"""
+artist_table_drop = """DROP TABLE artists"""
+time_table_drop = """DROP TABLE time"""
+
 
 # CREATE TABLES
 
 songplay_table_create = ("""
     CREATE TABLE IF NOT EXISTS songplay (
-        ts TIMESTAMP
-        ,userId INT
+        ts TIMESTAMP NOT NULL
+        ,userId INT NOT NULL
         ,level VARCHAR(10)
         ,song_id VARCHAR(50)
         ,artist_id VARCHAR(50)
-        ,sessionId INT
+        ,sessionId INT PRIMARY KEY
         ,location VARCHAR(500)
         ,userAgent VARCHAR(500)
     );
@@ -23,7 +24,7 @@ songplay_table_create = ("""
 
 user_table_create = ("""
     CREATE TABLE IF NOT EXISTS users (
-        userId INT
+        userId INT PRIMARY KEY
         ,firstName VARCHAR(50)
         ,lastName VARCHAR(50)
         ,gender CHAR
@@ -33,9 +34,9 @@ user_table_create = ("""
 
 song_table_create = ("""
     CREATE TABLE IF NOT EXISTS songs (
-        title VARCHAR(100)
-        ,song_id VARCHAR(50)
-        ,artist_id VARCHAR(50)
+        title VARCHAR(100) NOT NULL
+        ,song_id VARCHAR(50) PRIMARY KEY
+        ,artist_id VARCHAR(50) NOT NULL
         ,year INT
         ,song_length NUMERIC(16,4)
     );
@@ -43,8 +44,8 @@ song_table_create = ("""
 
 artist_table_create = ("""
     CREATE TABLE IF NOT EXISTS artists (
-        artist_id VARCHAR(50)
-        ,artist_name VARCHAR(50)
+        artist_id VARCHAR(50) PRIMARY KEY
+        ,artist_name VARCHAR(50) NOT NULL
         ,artist_latitude NUMERIC(38,10)
         ,artist_longitude NUMERIC(38,10)
     );
@@ -52,7 +53,7 @@ artist_table_create = ("""
 
 time_table_create = ("""
     CREATE TABLE IF NOT EXISTS time (
-        ts TIMESTAMP
+        ts TIMESTAMP PRIMARY KEY
         ,hour INT
         ,day INT
         ,week INT
@@ -65,24 +66,35 @@ time_table_create = ("""
 # INSERT RECORDS
 
 songplay_table_insert = ("""
-    INSERT INTO songplay VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO songplay 
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s) 
+    ON CONFLICT DO NOTHING
 """)
 
 user_table_insert = ("""
-    INSERT INTO users VALUES (%s, %s, %s, %s, %s)
+    INSERT INTO users 
+    VALUES (%s, %s, %s, %s, %s) 
+    ON CONFLICT (userId) DO UPDATE SET level = EXCLUDED.level
 """)
 
 song_table_insert = ("""
-    INSERT INTO songs VALUES (%s, %s, %s, %s, %s)
+    INSERT INTO songs 
+    VALUES (%s, %s, %s, %s, %s) 
+    ON CONFLICT (song_id) DO UPDATE SET title = EXCLUDED.title
 """)
 
 artist_table_insert = ("""
-    INSERT INTO artists VALUES (%s, %s, %s, %s)
+    INSERT INTO artists 
+    VALUES (%s, %s, %s, %s) 
+    ON CONFLICT (artist_id) DO UPDATE SET artist_name = EXCLUDED.artist_name
 """)
 
 time_table_insert = ("""
-    INSERT INTO time VALUES (%s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO time 
+    VALUES (%s, %s, %s, %s, %s, %s, %s) 
+    ON CONFLICT (ts) DO UPDATE SET ts = EXCLUDED.ts
 """)
+
 
 # FIND SONGS
 
@@ -96,6 +108,7 @@ song_select = ("""
             ON a.artist_id = s.artist_id
     ;
 """)
+
 
 # QUERY LISTS
 
